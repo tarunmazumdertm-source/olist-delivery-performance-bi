@@ -1,0 +1,29 @@
+# macOS
+.DS_Store
+.AppleDouble
+
+# Python
+__pycache__/
+*.py[cod]
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+
+# Secrets and credentials
+.env
+.env.*
+!.env.example
+
+# Raw Olist data - keep data files off GitHub
+02_data_acquisition/raw_data/*
+!02_data_acquisition/raw_data/.gitkeep
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
