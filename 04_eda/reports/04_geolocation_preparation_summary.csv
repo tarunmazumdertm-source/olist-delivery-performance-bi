@@ -1,0 +1,7 @@
+Measurement,Count
+Original geolocation records,1000163
+Exact duplicates removed,261831
+Records excluded by coordinate filter,38
+Prepared ZIP + state records,19018
+Unmatched customer records,279
+Unmatched seller records,42
