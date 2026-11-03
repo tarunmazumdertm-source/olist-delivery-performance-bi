@@ -1,0 +1,10 @@
+file,records_reported,columns,file_size_mib_reported,description,bi_relevance,validation_status
+olist_orders_dataset.csv,99441,8,16.84,"Orders, their status, purchase/approval dates and delivery milestones","Order-level sales, fulfillment and delivery performance","Reported by Monica; local validation pending"
+olist_customers_dataset.csv,99441,5,8.62,"Customer identifiers, ZIP-code prefix, city and state","Customer geography and repeat-customer identification","Reported by Monica; local validation pending"
+olist_order_items_dataset.csv,112650,7,14.72,"Items purchased per order, sellers, products, price and freight","Revenue, products, sellers and shipping costs","Reported by Monica; local validation pending"
+olist_order_payments_dataset.csv,103886,5,5.51,"Order payment methods, installments and amounts","Payment preferences and transaction values","Reported by Monica; local validation pending"
+olist_order_reviews_dataset.csv,99224,7,13.78,"Review ratings, optional text and review timestamps","Customer satisfaction and rating analysis","Reported by Monica; local validation pending"
+olist_products_dataset.csv,32951,9,2.27,"Product categories, names/description lengths, photos and dimensions","Product mix and category performance","Reported by Monica; local validation pending"
+olist_sellers_dataset.csv,3095,4,0.17,"Seller identifiers and geographic information","Seller location and marketplace performance","Reported by Monica; local validation pending"
+olist_geolocation_dataset.csv,1000163,5,58.44,"Brazilian ZIP-code prefixes, coordinates, city and state","Geographic mapping; ZIP prefixes may repeat","Reported by Monica; local validation pending"
+product_category_name_translation.csv,71,2,<0.01,"Portuguese product category labels translated into English","English-language product category reporting","Reported by Monica; local validation pending"
