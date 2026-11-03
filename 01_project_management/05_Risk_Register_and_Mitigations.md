@@ -1,27 +1,28 @@
 # Risk Register and Mitigations
 
-The risks and planned responses below are taken from the GR05 proposal. The named functional owners (PM, DE, BI, DS) are retained as written in the proposal. They have not been mapped to named team members in this document.
+The original proposal risks R1–R8 are retained. Additional risks R9–R11 reflect the more detailed data model, profiling and KPI information received from Aimen. No probability/impact scores are added because the proposal's risk matrix does not provide explicit score definitions.
 
-| ID | Risk from proposal | Planned response from proposal | Functional owner | Current notes / status |
+| ID | Risk | Impact | Mitigation / response | Current owner / coordination |
 |---|---|---|---|---|
-| R1 | Issues connecting Power BI to MySQL. | Test the 64-bit Connector/NET; fallback: ODBC or CSV export. | DE | Confirm connectivity and the team's available Windows / Power BI setup. |
-| R2 | Data-quality issues slow the ETL. | Profile all files; use documented rules and automated tests. | DS | Data dictionary and profiling should expose issues early. |
-| R3 | Scope creep. | Freeze the KPI catalogue at M3; use MoSCoW priorities; allow approved changes only. | PM | Keep the current scope stable through the 13 November milestone; record requested changes. |
-| R4 | Team availability, uneven workload. | Weekly stand-up; keep a one-week buffer before the final presentation. | PM | Review workload and blockers regularly. |
-| R5 | Laptop performance limit. | Aggregate geolocation by ZIP prefix; use Import mode; drop unused columns. | DE | Check dataset and tool performance on the hardware available to the team. |
-| R6 | Originality concerns. | Use a distinct order-to-review angle for the dataset, own KPIs and model. | PM | Keep the analysis focused on the team's defined question and clearly document its own choices. |
-| R7 | Predictive model underperforming. | Start with a simple baseline; use interpretable features; report honestly. | DS | This remains an overall project risk; model development is not a required output of the current Week 46 milestone. |
-| R8 | Loss of files or version conflicts. | Use a versioned folder for `.pbix`; make weekly backups. | DE | Use GitHub for versioned code and documentation; keep large raw data outside GitHub with a shared backup arrangement. |
+| R1 | Issues connecting Power BI to MySQL. | Dashboard cannot access warehouse data. | Test 64-bit Connector/NET; fallback to ODBC or CSV export. | DE functional role in proposal. |
+| R2 | Data-quality issues slow ETL. | Delays, incorrect measures or unreliable output. | Use Aimen's issue log; document cleaning rules and automated checks. | DS / Aimen workstream. |
+| R3 | Scope creep. | Incomplete milestone deliverables. | Keep the agreed project scope and 12-KPI working catalogue stable; approve and record changes. | PM functional role. |
+| R4 | Team availability / uneven workload. | Missed hand-offs and milestone delay. | Hold short progress check-ins; identify blockers early; protect time for integration and presentation. | PM functional role / all members. |
+| R5 | Laptop performance limit. | Slow processing, especially on geolocation. | Avoid repeated raw geolocation joins; deduplicate and aggregate by ZIP prefix before joining; load only required columns when appropriate. | DE / Tarun analysis coordination. |
+| R6 | Originality concerns. | Project lacks a clear contribution. | Keep the specific order-to-review focus, documented KPI definitions and transparent analysis. | PM functional role / all members. |
+| R7 | Predictive model underperforming. | Proposed model does not meet target. | Use a simple baseline, interpretable features and honest reporting. This is an overall project risk, not a current-milestone EDA dependency. | DS functional role. |
+| R8 | Loss of files or version conflicts. | Work lost or inconsistent versions. | Keep source data in the agreed Google Drive; maintain GitHub documentation/code; keep backups and preserve original files. Tarun maintains GitHub. | DE functional role / Tarun for repository. |
+| R9 | Join fan-out from one-to-many or many-to-many relationships. | Inflated order counts, GMV, payments or review measures. | Document grain for every table; aggregate items, payments and reviews to the required grain before joining; do not directly join raw geolocation by ZIP prefix. | Tarun with Aimen and Laura. |
+| R10 | KPI formulas, populations or baselines are ambiguous or not reproducible. | Different team members report different KPI values. | Use the 12-KPI catalogue as a working definition; record exclusions/denominators; independently reproduce baselines; agree unresolved formulas before final reporting. | Tarun with Aimen; Laura for warehouse measure alignment. |
+| R11 | Multiple reviews per order and repeated review IDs are handled inconsistently. | Review score, poor-review and review-gap KPIs may be double-counted. | Follow the proposed latest-review-per-order rule for the relevant analysis only after validating the sorting field and exact deduplication logic; retain an audit trail. | Tarun with Aimen. |
 
-## Risk matrix note
+## Key data-quality issues already reported by Aimen
 
-The proposal shows risk codes placed in Green, Amber and Red areas. It does not provide explicit probability or impact labels for the matrix axes. Therefore, this register does not invent numerical probability or impact scores.
+- Orders: 2,965 missing customer-delivery dates; 8 records marked delivered without a delivery date; 6 non-delivered statuses with a delivery date.
+- Reviews: 814 duplicate `review_id` values; 547 orders with more than one review (551 duplicate `order_id` rows in the uniqueness check). These are different counts and should not be treated as interchangeable.
+- Geolocation: 261,831 exact duplicate rows; 47 coordinates outside Brazil; repeated ZIP prefixes and 8 ZIP prefixes linked to more than one state.
+- Products/categories: 610 products without a category; 13 product rows in two categories without an English translation.
+- ZIP prefixes: preserve as five-character text to retain leading zeros.
+- Product column names: source spelling includes `lenght`; any rename should happen in a derived/cleaned layer, not the original CSV.
 
-## Review routine
-
-At each team check-in:
-
-1. Review whether any risk has become an active issue.
-2. Confirm the mitigation owner and next action.
-3. Record new issues and decisions in GitHub and the meeting notes.
-4. Update this file only when the team's risk position or agreed response changes.
+All counts above are Aimen's reported profiling results and should be reproduced before being presented as final validated findings.

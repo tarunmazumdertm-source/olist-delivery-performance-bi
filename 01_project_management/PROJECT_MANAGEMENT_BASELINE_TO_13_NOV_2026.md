@@ -4,157 +4,135 @@
 **Programme:** AIM — Business Intelligence & Big Data  
 **Semester:** WiSe 2026/27  
 **Group:** GR05  
-**Baseline date:** 3 November 2026  
-**Planning boundary:** Milestone Presentation — 13 November 2026 (Week 46)
+**Baseline update date:** 3 November 2026  
+**Planning boundary:** Milestone Presentation — **13 November 2026 (Week 46)**
 
-> This document records the current project baseline through the 13 November 2026 milestone only. Planning for later work will be added after the team reviews the milestone presentation and its feedback.
+> This document records the current project baseline through the 13 November 2026 milestone only. The next phase will be planned after reviewing the milestone presentation and its feedback.
 
-## 1. Project overview
+## 1. Project overview and analytical framing
 
-The project studies the customer journey from order to delivery to review using the Olist Brazilian e-commerce dataset. The proposal identifies that Olist's sales, delivery and review data are spread across files and that the effect of late deliveries on review scores has not been quantified.
+The project studies the customer journey from order to delivery to review using the Olist Brazilian e-commerce dataset. The proposal identifies that sales, delivery and review data are distributed across files and that the relationship between late deliveries and review scores needs to be quantified.
 
-**Main project question:** How does delivery performance affect customer satisfaction and sales?
+**Analytical research question:** How is delivery performance associated with customer satisfaction and sales outcomes in the Olist e-commerce marketplace?
 
-The analysis will examine relationships supported by the historical data. An observed association should not automatically be described as a causal effect.
+The project title remains as approved in the proposal. The analysis should report associations and patterns supported by the historical data; it should not claim causation without an appropriate causal design.
 
-## 2. Business domain, dataset and tools
+## 2. Dataset, scope and tools
 
 - **Business domain:** Online retail / e-commerce marketplace.
 - **Case:** Olist, a Brazilian marketplace integrator.
-- **Dataset:** Public Olist Brazilian e-commerce dataset listed on Kaggle.
-- **Proposal dataset profile:** 99,441 orders, 9 source CSV files and approximately 1.55 million rows. These figures must be checked against the acquired files.
-- **Analysis period in the proposal:** Orders from January 2017 to August 2018.
-- **Database:** MySQL 8.4 LTS, managed with MySQL Workbench.
-- **BI tool:** Power BI Desktop.
-- **Team working tools:** GitHub, Visual Studio Code, Python and Jupyter Notebook for collaboration and analysis.
-- **Dataset source:** https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce/data
+- **Dataset:** Brazilian E-Commerce Public Dataset by Olist, distributed through Kaggle: https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce
+- **Source data:** 9 CSV tables; 99,441 orders; 1,550,922 rows in total across tables, matching the acquired-file counts reported in Monica's inventory and Aimen's profiling.
+- **Full source period:** 2016–2018 according to source documentation.
+- **Analysis scope:** Purchase timestamp from 1 January 2017 through 31 August 2018 inclusive.
+- **Aimen-reported in-scope orders:** 99,092. Reproduce before final reporting.
+- **Aimen-reported K02 eligible orders:** 97,905 after excluding cancelled and unavailable statuses. This is not the same population as all in-scope orders.
+- **Database:** MySQL 8.4 LTS / MySQL Workbench.
+- **BI:** Power BI Desktop.
+- **Analysis / development:** Python, Pandas, Jupyter Notebook and Visual Studio Code.
+- **Repository:** GitHub maintained by Tarun.
+- **Raw data storage:** Shared Google Drive: https://drive.google.com/drive/folders/18UaKUi23RyLpWwP0VCfA8H8RE5AjFkVw
+- **Licence recorded in Monica's source documentation:** CC BY-NC-SA 4.0. Provide attribution and review licence terms before redistributing adapted material.
 
-## 3. Problem, scope and objectives
+## 3. Business problem, objectives and outcomes
 
-### Problem
-
-The proposal states that Olist lacks a single, trusted view of how sales, delivery performance and customer satisfaction relate. The information is distributed across files, and the effect of late deliveries on review scores has not been quantified.
-
-### Scope in the proposal
-
-- Orders from January 2017 to August 2018.
-- MySQL staging area and star-schema data warehouse.
-- Power BI Desktop dashboard.
-- Predictive model to flag orders at risk of a 1–2-star review.
-- Use of all nine source files.
-
-### Objectives in the proposal
+The project aims to bring order, delivery, sales and review information into a documented analytical foundation. The overall proposal objectives remain:
 
 1. Build a MySQL star-schema warehouse from all nine source files.
 2. Define and validate at least 12 relevant KPIs.
 3. Create an interactive Power BI dashboard.
-4. Build a model that flags orders at risk of a poor review.
+4. Build a model to flag orders at risk of a 1–2-star review.
 
-### Expected outcomes in the proposal
+The overall expected outcomes are a documented data warehouse, validated KPI catalogue, interactive dashboard and poor-review risk model. They are not all due by the 13 November milestone.
 
-- Documented data warehouse.
-- Validated KPI catalogue.
-- Interactive dashboard.
-- Predictive model for poor-review risk.
+## 4. Refined KPI framework
 
-### Constraints
+Aimen supplied a 12-KPI working catalogue:
 
-- Limited time.
-- Free tools only: MySQL Community and Power BI Desktop.
-- Standard laptops.
-- Power BI Desktop runs on Windows only; the team must confirm the workable setup.
-- Static, anonymised historical data from 2016–2018.
+- **Sales:** K01 GMV; K02 number of orders; K03 average order value.
+- **Delivery:** K04 on-time delivery rate; K05 average delivery time; K06 average delay of late orders; K07 seller dispatch compliance; K08 delivery estimate buffer.
+- **Satisfaction:** K09 average review score; K10 poor review rate; K11 review gap between on-time and late orders.
+- **Customer:** K12 repeat customer rate.
 
-These are overall project scope and outcome statements. They are not all deliverables for the 13 November milestone.
+Full formulas, reported baselines, proposed targets and open validation questions are in `09_KPI_Catalogue_and_Validation_Notes.md`. Aimen's baselines are provisional until independently recalculated. Important unresolved definitions include K03 population, K07 order-level aggregation of item-level shipping deadlines, K08 sign interpretation and duplicate-review treatment for K09–K11.
 
-## 4. Team ownership
+## 5. Data structure and quality baseline
 
-The following named workstream allocation is the current team agreement and has not changed:
+Aimen's data dictionary documents 52 attributes across nine source tables. The model identifies order, item, payment, review, customer, seller, product, category translation and geolocation tables.
 
-| Member | Workstream | Current expected output |
+Key safeguards:
+
+- Order items use the composite key `order_id` + `order_item_id`.
+- Payments use the composite key `order_id` + `payment_sequential`.
+- More than one review can occur for an order; `review_id` is not unique in Aimen's profile.
+- `customer_unique_id` identifies a person across order-specific `customer_id` values.
+- Geolocation ZIP prefixes are repeated and cannot be joined as if they were unique; aggregate geolocation before joining.
+- Read ZIP prefixes as five-character text to preserve leading zeros.
+- Aggregate item and payment tables to the required grain before combining them with order-level data to avoid join fan-out.
+
+Reported high-priority quality issues include missing delivery dates, duplicate/multiple reviews, missing product categories/translations, geolocation duplicates and ZIP-prefix ambiguity. See `10_Data_Model_and_Analysis_Rules.md` for details. These are Aimen-reported profiling results and require reproduction before final validation.
+
+## 6. Team ownership and hand-offs
+
+| Member | Workstream | Current evidence / expected output |
 |---|---|---|
-| Monica | Data acquisition | Source inventory, dataset provenance and organised raw source files / access location. |
-| Aimen | Data dictionary and data quality | Attribute definitions, data types, candidate keys, initial profiling and quality summary. |
-| Tarun | EDA | Reproducible Python/Jupyter notebook(s) and EDA report. |
-| Laura | Data warehouse design and SQL | ERD, initial star-schema design and SQL DDL. |
+| Monica | Data acquisition | Source documentation, inventory and shared raw-data location received. |
+| Aimen | Data dictionary and data quality | Dictionary workbook, profiling/KPI presentation and Python script received. |
+| Tarun | EDA and GitHub repository maintenance | Stage 1 and Stage 2 notebook work committed; Stage 3 is in progress. EDA notebook, KPI validation and report are expected. |
+| Laura | Data warehouse design and SQL | ERD, star schema and SQL DDL expected; current progress not confirmed in the materials reviewed for this update. |
 
-### Dependencies
+Aimen's dictionary/quality work supports Tarun's analysis and Laura's schema. Tarun's KPI and analysis grain requirements should be aligned with Laura's warehouse design.
 
-Monica's source files and inventory enable the other workstreams. Aimen's definitions and quality findings support both Tarun's interpretation and Laura's data model. Tarun's analysis needs and KPIs should be discussed with Laura when defining the warehouse grain, dimensions and measures. All four workstreams contribute to the milestone presentation and demo.
+**Repository arrangement:** Tarun maintains GitHub. Other members view/review the shared project material and provide feedback; they are not expected to create branches or commit under the current arrangement. Raw CSVs remain on Google Drive, not GitHub.
 
-### Functional role model in the proposal
+## 7. Milestones through 13 November 2026
 
-The proposal describes PM (Project Manager & Business Analyst), DE (Data Engineer), BI (BI Developer) and DS (Data Scientist & QA Lead). It defines responsibilities for each role but does not name the person assigned to each role. This baseline therefore keeps these functional roles separate from the named task allocation above.
-
-## 5. Milestone plan through 13 November 2026
-
-| Week | Deliverables in the proposal | Current working ownership |
+| Week | Proposal deliverables | Workstream alignment |
 |---|---|---|
-| 42 | RDBMS and BIA tool; initial business understanding; roles; milestones; risk matrix; success criteria. | Whole team; coordinated as a group. |
-| 44 | Data source inventory; EDA report; schema diagrams (ERD); SQL DDL for warehouse schema. | Monica — source inventory; Aimen — dictionary / profiling; Tarun — EDA; Laura — ERD / SQL DDL. |
-| 46 | Milestone presentation: slides and demo; feedback log. | PM coordinates; all members contribute. Presentation date: **13 November 2026**. |
+| 42 | RDBMS and BIA tool; initial business understanding; roles; milestones; risk matrix; success criteria. | Whole team. |
+| 44 | Data source inventory; EDA report; schema diagrams (ERD); SQL DDL for warehouse schema. | Monica — acquisition/inventory; Aimen — dictionary/profiling; Tarun — EDA; Laura — ERD/DDL. |
+| 46 | Milestone presentation, slides/demo and feedback log. | All workstreams contribute; presentation on 13 November 2026. |
 
-### Evidence expected for the Week 46 milestone
+### Status snapshot — 3 November 2026
 
-- Source inventory and access to the source data.
-- Initial data dictionary and data-quality overview.
-- Initial EDA notebook and report.
-- ERD and initial warehouse design.
-- SQL DDL for the proposed warehouse schema.
+- Project topic and business understanding documented; Stage 1 notebook committed.
+- All nine source tables loaded in Tarun's notebook; Stage 2 summary created and committed.
+- Monica's source documentation and data access information recorded in GitHub; raw CSVs kept in Google Drive.
+- Aimen's dictionary, profiling workbook, KPI presentation and script received and committed to GitHub.
+- Tarun's Stage 3 variable/relationship exploration is in progress; the initial 10-KPI draft needs replacement with the 12-KPI catalogue.
+- Laura's ERD/DDL status needs confirmation.
+- Milestone slides, demo and feedback log remain to be prepared.
+
+## 8. Risks
+
+The proposal's original risks R1–R8 remain. Three additional risks have been added based on Aimen's findings:
+
+- **R9 — Join fan-out / grain mismatch:** Multiple item, payment or review rows and repeated geolocation ZIP prefixes may inflate measures. Aggregate to the required grain before joining.
+- **R10 — KPI definitions/baselines not reproducible:** Record populations, denominators and exclusions; recalculate and reconcile Aimen's reported values.
+- **R11 — Review duplicates/multiple reviews per order:** Validate the proposed latest-review-per-order rule and keep separate definitions for K09, K10 and K11 if their populations differ.
+
+See `05_Risk_Register_and_Mitigations.md` for the full register.
+
+## 9. Current milestone evidence
+
+- Source inventory and shared raw-data access.
+- Data dictionary and initial data-quality overview.
+- Initial EDA notebook and report; KPI framework and any recalculated values clearly labelled as validated or provisional.
+- ERD and initial star-schema design.
+- SQL DDL for the proposed schema.
 - Presentation slides, demo and feedback log.
 
-The team should state clearly which items are complete, partial or still open. This baseline does not claim that any work is complete without confirmation.
+The team should not present Aimen's reported baselines as independently verified unless Tarun reproduces them or documents an agreed reason for any difference.
 
-## 6. Risk register
+## 10. Boundary and next update
 
-| ID | Risk | Planned response | Functional owner in proposal |
-|---|---|---|---|
-| R1 | Issues connecting Power BI to MySQL. | Test 64-bit Connector/NET; fallback to ODBC or CSV export. | DE |
-| R2 | Data-quality issues slow the ETL. | Profile all files; use documented rules and automated tests. | DS |
-| R3 | Scope creep. | Freeze KPI catalogue at M3; use MoSCoW priorities; allow approved changes only. | PM |
-| R4 | Team availability / uneven workload. | Weekly stand-up; keep a one-week buffer before the final presentation. | PM |
-| R5 | Laptop performance limit. | Aggregate geolocation by ZIP prefix; use Import mode; drop unused columns. | DE |
-| R6 | Originality concerns. | Use a distinct order-to-review angle, own KPIs and model. | PM |
-| R7 | Predictive model underperforming. | Start with a simple baseline; use interpretable features; report honestly. | DS |
-| R8 | Loss of files or version conflicts. | Versioned folder for `.pbix`; weekly backups. | DE |
+This baseline stops at the **13 November 2026 Milestone Presentation**. After that presentation, the team will review feedback, agree priorities and prepare the next project plan. No detailed post-milestone plan is included here.
 
-The proposal's risk matrix does not provide explicit probability and impact labels. No numeric risk scores are added here.
+## 11. Source basis
 
-## 7. Overall success criteria in the proposal
-
-These are overall project targets, not all targets due at the current milestone:
-
-| Area | Proposal target |
-|---|---|
-| Data and ETL | 100% of source rows loaded, or logged with a reason. |
-| KPI catalogue | 12 KPIs documented with formula, owner and target. |
-| Dashboard usability | 80% task success in a usability test with 5 peers. |
-| Analytics model | Minimum AUC of 0.7 for the low-review classifier on unseen test data. |
-
-## 8. Team collaboration and document control
-
-- The GitHub repository is the shared version-controlled location for project code and documentation.
-- Keep the `main` branch as the agreed shared baseline.
-- Each member should work on their own branch and submit changes using Pull Requests.
-- Use GitHub Issues / Projects to track live task status.
-- Do not commit the raw Olist CSV files to GitHub; store them in the team's agreed shared storage and keep source/access information in the repository.
-- Record decisions, blockers and changes in this project-management folder.
-
-## 9. Milestone boundary and next update
-
-This document stops at the **13 November 2026 Milestone Presentation**. After the presentation, the team should review feedback, agree the next work phase and update the project-management baseline. No post-milestone work plan is included here.
-
-## 10. Proposal source
-
-Prepared from the uploaded GR05 proposal presentation, `GR05_Redesigned_Presentation(1).pptx`:
-
-- Slides 1–2: project title, group and agenda.
-- Slide 3: business domain, tools and dataset profile.
-- Slide 4: business terms.
-- Slide 5: problem, scope, objectives, expected outcomes and constraints.
-- Slide 6: functional roles and responsibilities.
-- Slide 7: milestone weeks and deliverables; dates for the milestone and final presentation.
-- Slides 8–9: risk matrix and mitigation plan.
-- Slide 10: overall success criteria.
-
-Named team ownership and the GitHub working approach are based on the team's project setup discussion, not on named assignments in the proposal slides.
+- GR05 project proposal presentation: project background, scope, objectives, tools, functional role model, milestone plan, risk matrix and success criteria.
+- Monica, `Data Source Documentation.xlsx`: dataset source, licence, provenance and inventory.
+- Aimen, `Data Dictionary & Profiling.xlsx`: 52-attribute dictionary, profiling, issue log, relationships and KPI catalogue.
+- Aimen, `Data Dictionary_Profiling + KPIs.pptx`: source model, quality summary, preparation issues and 12 KPI summary.
+- Aimen, `olist-profiling.py`: profiling implementation reference.
+- Team discussion: named workstream ownership and GitHub repository maintenance arrangement.
