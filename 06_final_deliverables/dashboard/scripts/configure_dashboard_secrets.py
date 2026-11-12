@@ -16,7 +16,7 @@ gitignore_file = script_dir / ".gitignore"
 host = "127.0.0.1"
 port = 3306
 user = "olist_dashboard"
-database = "olist_dm_test"
+database = "olist_dm"
 
 print("Olist Dashboard - Secure Database Setup")
 
@@ -59,7 +59,7 @@ try:
     )
 
     cursor.execute(
-        f"GRANT SELECT ON `olist_meta_test`.`etl_run` "
+        f"GRANT SELECT ON `olist_meta`.`etl_run` "
         f"TO '{user}'@'{host}'"
     )
 

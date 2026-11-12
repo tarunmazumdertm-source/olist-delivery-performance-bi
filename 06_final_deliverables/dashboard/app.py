@@ -181,7 +181,7 @@ def read_server_mysql_config() -> dict[str, Any] | None:
             "port": int(secret.get("port", 3306)),
             "user": str(secret.get("user", "olist_dashboard")),
             "password": str(secret.get("password", "")),
-            "database": str(secret.get("database", "olist_dm_test")),
+            "database": str(secret.get("database", "olist_dm")),
         }
     except Exception:
         # No secrets file is normal during local development; use the manual form.
@@ -220,9 +220,9 @@ else:
         st.markdown("**MySQL connection**")
         host = st.text_input("Host", value="127.0.0.1")
         port = st.number_input("Port", min_value=1, max_value=65535, value=3306, step=1)
-        user = st.text_input("User", value="root")
+        user = st.text_input("User", value="olist_dashboard")
         password = st.text_input("Password", type="password", value="")
-        database = st.text_input("Database", value="olist_dm_test")
+        database = st.text_input("Database", value="olist_dm")
         connect_clicked = st.form_submit_button("Connect to Data Mart", type="primary", use_container_width=True)
 
     if connect_clicked:
@@ -259,7 +259,7 @@ if "db_config" not in st.session_state:
     )
     st.info("Connect to your local MySQL Data Mart using the form in the left sidebar.")
     st.markdown(
-        "**Connection defaults:** `127.0.0.1` · port `3306` · database `olist_dm_test`. "
+        "**Connection defaults:** `127.0.0.1` · port `3306` · database `olist_dm`. "
         "The dashboard uses read-only SELECT queries and does not change your database."
     )
     st.stop()
@@ -281,13 +281,13 @@ try:
     date_bounds = query_one(
         connection,
         """SELECT MIN(DATE(purchase_ts)) AS min_date, MAX(DATE(purchase_ts)) AS max_date
-           FROM olist_dm_test.fact_order_fulfillment""",
+           FROM olist_dm.fact_order_fulfillment""",
     )
     region_df = query_df(
         connection,
         """SELECT DISTINCT l.region_name
-           FROM olist_dm_test.fact_order_fulfillment f
-           JOIN olist_dm_test.dim_location l ON l.location_key = f.customer_location_key
+           FROM olist_dm.fact_order_fulfillment f
+           JOIN olist_dm.dim_location l ON l.location_key = f.customer_location_key
            WHERE f.customer_location_key <> -1
            ORDER BY l.region_name""",
     )
@@ -311,8 +311,8 @@ try:
 
     region = st.sidebar.selectbox("Customer region", ["All regions"] + all_regions)
     state_sql = """SELECT DISTINCT l.state_code
-                    FROM olist_dm_test.fact_order_fulfillment f
-                    JOIN olist_dm_test.dim_location l ON l.location_key = f.customer_location_key
+                    FROM olist_dm.fact_order_fulfillment f
+                    JOIN olist_dm.dim_location l ON l.location_key = f.customer_location_key
                     WHERE f.customer_location_key <> -1"""
     state_params: tuple[Any, ...] = ()
     if region != "All regions":
@@ -329,7 +329,7 @@ try:
         st.rerun()
 
     where, params = build_scope(start_date, end_date, region, selected_states)
-    loc_join = "LEFT JOIN olist_dm_test.dim_location loc ON loc.location_key = f.customer_location_key"
+    loc_join = "LEFT JOIN olist_dm.dim_location loc ON loc.location_key = f.customer_location_key"
 
     page = st.sidebar.radio(
         "Dashboard page",
@@ -360,17 +360,17 @@ try:
         connection,
         f"""SELECT
               (SELECT SUM(si.item_price)
-               FROM olist_dm_test.fact_sales_item si
-               JOIN olist_dm_test.fact_order_fulfillment f ON f.order_key = si.order_key
+               FROM olist_dm.fact_sales_item si
+               JOIN olist_dm.fact_order_fulfillment f ON f.order_key = si.order_key
                {loc_join}
                {where} AND si.is_sales_eligible = 1) AS k01_gmv,
               (SELECT COUNT(DISTINCT f.order_id)
-               FROM olist_dm_test.fact_order_fulfillment f
+               FROM olist_dm.fact_order_fulfillment f
                {loc_join}
                {where} AND f.is_sales_eligible = 1) AS k02_orders,
               (SELECT SUM(p.payment_value)
-               FROM olist_dm_test.fact_payment p
-               JOIN olist_dm_test.fact_order_fulfillment f ON f.order_key = p.order_key
+               FROM olist_dm.fact_payment p
+               JOIN olist_dm.fact_order_fulfillment f ON f.order_key = p.order_key
                {loc_join}
                {where} AND p.is_sales_eligible = 1) AS eligible_payment_value""",
         params * 3,
@@ -388,7 +388,7 @@ try:
               100.0 * SUM(CASE WHEN is_dispatch_on_time = 1 THEN 1 ELSE 0 END)
                   / NULLIF(SUM(CASE WHEN is_dispatch_on_time IS NOT NULL THEN 1 ELSE 0 END), 0) AS k07_dispatch,
               AVG(CASE WHEN is_delivery_kpi_eligible = 1 THEN estimate_buffer_days END) AS k08_buffer
-           FROM olist_dm_test.fact_order_fulfillment f
+           FROM olist_dm.fact_order_fulfillment f
            {loc_join}
            {where}""",
         params,
@@ -400,9 +400,9 @@ try:
               100.0 * SUM(CASE WHEN r.review_score <= 2 THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0) AS k10_poor_rate,
               AVG(CASE WHEN r.is_latest_for_order = 1 AND ds.status_code = 'ON_TIME' THEN r.review_score END)
                 - AVG(CASE WHEN r.is_latest_for_order = 1 AND ds.status_code = 'LATE' THEN r.review_score END) AS k11_review_gap
-           FROM olist_dm_test.fact_review r
-           JOIN olist_dm_test.fact_order_fulfillment f ON f.order_key = r.order_key
-           LEFT JOIN olist_dm_test.dim_delivery_status ds ON ds.delivery_status_key = r.delivery_status_key
+           FROM olist_dm.fact_review r
+           JOIN olist_dm.fact_order_fulfillment f ON f.order_key = r.order_key
+           LEFT JOIN olist_dm.dim_delivery_status ds ON ds.delivery_status_key = r.delivery_status_key
            {loc_join}
            {where}""",
         params,
@@ -411,7 +411,7 @@ try:
         connection,
         """SELECT 100.0 * SUM(CASE WHEN is_repeat_customer = 1 THEN 1 ELSE 0 END)
                     / NULLIF(SUM(CASE WHEN eligible_order_count > 0 THEN 1 ELSE 0 END), 0) AS k12_repeat
-           FROM olist_dm_test.dim_customer
+           FROM olist_dm.dim_customer
            WHERE customer_key <> -1""",
     ).get("k12_repeat")
 
@@ -433,7 +433,7 @@ try:
                       COUNT(DISTINCT CASE WHEN f.is_sales_eligible = 1 THEN f.order_id END) AS eligible_orders,
                       100.0 * SUM(CASE WHEN f.is_delivery_kpi_eligible = 1 AND f.is_on_time = 1 THEN 1 ELSE 0 END)
                         / NULLIF(SUM(CASE WHEN f.is_delivery_kpi_eligible = 1 THEN 1 ELSE 0 END), 0) AS on_time_pct
-                   FROM olist_dm_test.fact_order_fulfillment f
+                   FROM olist_dm.fact_order_fulfillment f
                    {loc_join}
                    {where}
                    GROUP BY DATE_FORMAT(f.purchase_ts, '%Y-%m')
@@ -443,8 +443,8 @@ try:
         status = query_df(
             connection,
             f"""SELECT os.status_label, COUNT(*) AS orders
-               FROM olist_dm_test.fact_order_fulfillment f
-               LEFT JOIN olist_dm_test.dim_order_status os ON os.order_status_key = f.order_status_key
+               FROM olist_dm.fact_order_fulfillment f
+               LEFT JOIN olist_dm.dim_order_status os ON os.order_status_key = f.order_status_key
                {loc_join}
                {where}
                GROUP BY os.status_label ORDER BY orders DESC""",
@@ -502,8 +502,8 @@ try:
                       100.0 * SUM(CASE WHEN f.is_delivery_kpi_eligible = 1 AND f.is_on_time = 1 THEN 1 ELSE 0 END)
                         / NULLIF(SUM(CASE WHEN f.is_delivery_kpi_eligible = 1 THEN 1 ELSE 0 END), 0) AS on_time_pct,
                       AVG(CASE WHEN f.is_delivery_kpi_eligible = 1 THEN f.delivery_days END) AS avg_delivery_days
-                   FROM olist_dm_test.fact_order_fulfillment f
-                   LEFT JOIN olist_dm_test.dim_location loc ON loc.location_key = f.customer_location_key
+                   FROM olist_dm.fact_order_fulfillment f
+                   LEFT JOIN olist_dm.dim_location loc ON loc.location_key = f.customer_location_key
                    {where}
                    GROUP BY loc.state_code, loc.state_name
                    HAVING delivered_orders > 0
@@ -513,7 +513,7 @@ try:
         delay_cause = query_df(
             connection,
             f"""SELECT f.delay_cause, COUNT(*) AS late_orders, AVG(f.delay_days) AS avg_delay_days
-                   FROM olist_dm_test.fact_order_fulfillment f
+                   FROM olist_dm.fact_order_fulfillment f
                    {loc_join}
                    {where} AND f.is_delivery_kpi_eligible = 1 AND f.is_late = 1 AND f.delay_cause IS NOT NULL
                    GROUP BY f.delay_cause ORDER BY late_orders DESC""",
@@ -525,9 +525,9 @@ try:
                       COUNT(DISTINCT CASE WHEN si.is_dispatch_on_time IS NOT NULL THEN si.order_id END) AS eligible_dispatch_orders,
                       100.0 * COUNT(DISTINCT CASE WHEN si.is_dispatch_on_time = 1 THEN si.order_id END)
                         / NULLIF(COUNT(DISTINCT CASE WHEN si.is_dispatch_on_time IS NOT NULL THEN si.order_id END), 0) AS dispatch_compliance_pct
-                   FROM olist_dm_test.fact_sales_item si
-                   JOIN olist_dm_test.fact_order_fulfillment f ON f.order_key = si.order_key
-                   JOIN olist_dm_test.dim_seller s ON s.seller_key = si.seller_key
+                   FROM olist_dm.fact_sales_item si
+                   JOIN olist_dm.fact_order_fulfillment f ON f.order_key = si.order_key
+                   JOIN olist_dm.dim_seller s ON s.seller_key = si.seller_key
                    {loc_join}
                    {where}
                    GROUP BY s.seller_id
@@ -580,8 +580,8 @@ try:
         score_distribution = query_df(
             connection,
             f"""SELECT r.review_score, COUNT(*) AS review_count
-                   FROM olist_dm_test.fact_review r
-                   JOIN olist_dm_test.fact_order_fulfillment f ON f.order_key = r.order_key
+                   FROM olist_dm.fact_review r
+                   JOIN olist_dm.fact_order_fulfillment f ON f.order_key = r.order_key
                    {loc_join}
                    {where} AND r.is_latest_for_order = 1
                    GROUP BY r.review_score ORDER BY r.review_score""",
@@ -593,9 +593,9 @@ try:
                       AVG(r.review_score) AS avg_review_score,
                       100.0 * SUM(CASE WHEN r.review_score <= 2 THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0) AS poor_review_pct,
                       COUNT(*) AS latest_reviews
-                   FROM olist_dm_test.fact_review r
-                   JOIN olist_dm_test.fact_order_fulfillment f ON f.order_key = r.order_key
-                   JOIN olist_dm_test.dim_delivery_status ds ON ds.delivery_status_key = r.delivery_status_key
+                   FROM olist_dm.fact_review r
+                   JOIN olist_dm.fact_order_fulfillment f ON f.order_key = r.order_key
+                   JOIN olist_dm.dim_delivery_status ds ON ds.delivery_status_key = r.delivery_status_key
                    {loc_join}
                    {where} AND r.is_latest_for_order = 1
                    GROUP BY ds.status_label, ds.status_code
@@ -611,8 +611,8 @@ try:
                         ELSE '22+ days' END AS delivery_band,
                       AVG(r.review_score) AS avg_review_score,
                       COUNT(*) AS latest_reviews
-                   FROM olist_dm_test.fact_review r
-                   JOIN olist_dm_test.fact_order_fulfillment f ON f.order_key = r.order_key
+                   FROM olist_dm.fact_review r
+                   JOIN olist_dm.fact_order_fulfillment f ON f.order_key = r.order_key
                    {loc_join}
                    {where} AND r.is_latest_for_order = 1 AND f.is_delivery_kpi_eligible = 1
                    GROUP BY delivery_band
@@ -659,11 +659,11 @@ try:
         )
 
     st.divider()
-    st.caption("GR05 · Olist BI & Big Data Analytics · Source: validated MySQL Data Mart (olist_dm_test). Dashboard queries are read-only.")
+    st.caption("GR05 · Olist BI & Big Data Analytics · Source: validated MySQL Data Mart (olist_dm). Dashboard queries are read-only.")
 
 except mysql.connector.Error as exc:
     st.error(f"Could not read the Data Mart: {exc}")
-    st.info("Check that MySQL is running and that database `olist_dm_test` contains the successful Data Mart ETL run 12.")
+    st.info("Check that MySQL is running and that database `olist_dm` contains the successful Data Mart ETL run 12.")
 except Exception as exc:  # Keep a helpful message visible rather than a blank app.
     st.exception(exc)
 finally:
