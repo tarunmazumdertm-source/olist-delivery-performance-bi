@@ -27,3 +27,26 @@ venv/
 *.db
 *.sqlite
 *.sqlite3
+
+# Database backups and prepared SQL dumps
+08_database_release/backups/
+08_database_release/prepared_dumps/
+
+# macOS files
+.DS_Store
+
+# Personal VS Code settings
+.vscode/
+
+# Deprecated Power BI exports - Streamlit is the active dashboard
+06_final_deliverables/powerbi/
+
+# Generated release ZIP packages
+06_final_deliverables/olist_streamlit_dashboard.zip
+GR05_dashboard_release_pack.zip
+GR05_dashboard_validation_and_lan_fix.zip
+
+# Duplicate and outdated audit scripts - keep canonical V2 only
+05_data_warehouse/validation/GR05_Data_Audit_V2 (1).sql
+05_data_warehouse/validation/GR05_Olist_final_data_audit_V2.sql
+05_data_warehouse/validation/GR05_Olist_final_data_audit.sql
